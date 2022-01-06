@@ -84,6 +84,11 @@ class CustomImageDataset():
 
                         # Draw landmarks
                         draw_styled_landmarks(image, results)
+
+                        window = 0.5
+                        min_width, max_width = int((0.5-window/2)*self.RESOLUTION_Y), int((0.5+window/2)*self.RESOLUTION_Y)
+                        
+                        image = image[:, min_width:max_width]  
                         image = cv2.flip(image, 1)
                         # NEW Apply wait logic
                         if frame_num == 0:
@@ -120,8 +125,8 @@ class CustomImageDataset():
 
                         # Break gracefully
                         if cv2.waitKey(10) & 0xFF == ord('q'):
-                            break               
-            self.cap.release()
+                            break    
+                            
             cv2.destroyAllWindows()
 
         

@@ -83,12 +83,10 @@ def train_launch(model, learning_rate, DECAY, num_epochs, train_loader, test_loa
             f"Accuracy on test set: {model.test_loop(test_loader, model, criterion)*100:.2f}")
     print("Done!")
 
-    for epoch in range(num_epochs):
-        print(f"Epoch {epoch+1}\n-------------------------------")
-        
-        print(
+    print(
             f"Accuracy on valid set: {model.test_loop(valid_loader, model, criterion)*100:.2f}")
-
+   
+        
     # model = models.vgg16(pretrained=True).cuda()
     torch.save(model.state_dict(), 'actionNN.pth')
     return model
@@ -110,17 +108,17 @@ nb_sequences_test = int(nb_sequences*10/100)
 sequence_length = 30
 
 # ===================================== Parameters to modify =====================================================
-make_train =  True
+make_train =  False
 make_dataset = False
 make_data_augmentation = True
 #=================================================================================================================
 
 if(make_dataset): make_train = True
 # dataset making : (ajouter des actions dans le actionsToAdd pour créer leur dataset)
-actionsToAdd = ["empty"]  #
+actionsToAdd = []  #
 
 # Actions that we try to detect
-actions = np.array(["nothing","empty", "hello", "thanks", "iloveyou", "what's up",  "my", "name","nice","to meet you"])
+actions = np.array(["nothing","empty", "hello", "thanks", "iloveyou","what's up", "hey","my", "name","nice","to meet you"])
 #, "nothing" 'hello', 'thanks', 'iloveyou', "what's up", "hey", "my", "name", "nice","to meet you"
 
 # instances de preprocess
@@ -135,5 +133,5 @@ cap = IntelVideoReader()
 for action in actions:
     if (action != "nothing" and action != "empty"):
         Tuto(actions, action, RESOLUTION_X, RESOLUTION_Y).launch_tuto()
-        launch_test(actions, model, action,cap)
+        launch_test(actions, model, action,cap, RESOLUTION_X, RESOLUTION_Y)
         

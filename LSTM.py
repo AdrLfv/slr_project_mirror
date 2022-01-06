@@ -86,4 +86,4 @@ class myLSTM(nn.Module):
                 num_correct += (predictions == y).sum()
                 num_samples += predictions.size(0)
         model.train()
-        return num_correct/num_samples
+        return num_correct//num_samples

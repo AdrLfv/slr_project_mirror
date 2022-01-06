@@ -59,7 +59,7 @@ class Preprocess():
             if (self.data_augmentation): res = Data_augmentation(res, x_shift, y_shift, scale).__getitem__()
             window.append(res)
             
-            print("res shape",np.array(res).shape)
+            #print("res shape",np.array(res).shape)
 
         self.X = window
         self.y = ind_action 

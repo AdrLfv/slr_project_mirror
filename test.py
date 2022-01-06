@@ -150,33 +150,34 @@ def draw_styled_landmarks(image, results):
                               )
 
 
-def launch_test(actions, model, action, RESOLUTION_X, RESOLUTION_Y):
+def launch_test(actions, model, action,cap, RESOLUTION_X, RESOLUTION_Y):
 
     colors = [(245, 117, 16), (117, 245, 16), (16, 117, 245)]
 
     sequence = []
     sentence = []
     threshold = 0.9
-    cap = cv2.VideoCapture(0)
+
+    #cap = cv2.VideoCapture(0)
     count_valid = 0
     # Set mediapipe model
     with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
-        while cap.isOpened():
+        while True:
 
             # Read feed
             frame, depth = cap.next_frame()
-            frame= cv2.resize(frame,(RESOLUTION_Y,RESOLUTION_X))
+            #frame= cv2.resize(frame,(RESOLUTION_X,RESOLUTION_Y))
 
             # Make detections
             image, results = mediapipe_detection(frame, holistic)
             # print(results)
-            #image = cv2.resize(image,(RESOLUTION_Y,RESOLUTION_X))
+            image = cv2.resize(image,(RESOLUTION_Y,RESOLUTION_X))
             
             # Draw landmarks
             draw_styled_landmarks(image, results)
             #image = cv2.flip(image, 1)
             window = 0.5
-            min_width, max_width = int((0.5-window/2)*RESOLUTION_X), int((0.5+window/2)*RESOLUTION_X)
+            min_width, max_width = int((0.5-window/2)*RESOLUTION_Y), int((0.5+window/2)*RESOLUTION_Y)
             
             image = image[:, min_width:max_width]  
             
@@ -226,6 +227,6 @@ def launch_test(actions, model, action, RESOLUTION_X, RESOLUTION_Y):
             if cv2.waitKey(10) & 0xFF == ord('q'):
                 cv2.destroyAllWindows()
                 break
-        cap.release()
+        #cap.release()
         
 
