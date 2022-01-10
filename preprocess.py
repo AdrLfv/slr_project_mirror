@@ -12,17 +12,29 @@ import os
 
 from slr_project_mirror.tuto import DATA_PATH
 
-def remove_face(results):
-        window = []
-        frame = list(results)
-        for i, _ in enumerate(frame[0:33*4]):
-            window.append(frame[i])
+def remove_points(results):
+    window = []
+    frame = list(results)
+    #pose
+    for i, _ in enumerate(frame[0:33*4]):
+        if i % 4 == 0:
+            window.append(frame[i]) 
+            window.append(frame[i+1]) 
 
-        for i, _ in enumerate(frame[33*4+468*3:]):
-            window.append(frame[33*4+468*3+i])
+    #left hand
+    for i, _ in enumerate(frame[33*4+468*3: 33*4+468*3+21*3]):
+        if i % 3 == 0:
+            window.append(frame[33*4+468*3+i]) 
+            window.append(frame[33*4+468*3+i+1]) 
 
-        #print("window shape",np.array(window).shape)
-        return window
+    #right hand
+    for i, _ in enumerate(frame[33*4+468*3+21*3:]):
+        if i % 3 == 0:
+            window.append(frame[33*4+468*3+21*3+i]) 
+            window.append(frame[33*4+468*3+21*3+i+1]) 
+
+    #print("window shape",np.array(window).shape)
+    return window
 
 class Preprocess():
     def __init__(self, actions, DATA_PATH: str, nb_sequences: int, sequence_length: int, data_augmentation: bool):
@@ -55,11 +67,11 @@ class Preprocess():
                 ind_seq), "{}.npy".format(frame_num)), allow_pickle=True)
             
             
-            res = remove_face(res)
+            res = remove_points(res)
             if (self.data_augmentation): res = Data_augmentation(res, x_shift, y_shift, scale).__getitem__()
             window.append(res)
             
-            #print("res shape",np.array(res).shape)
+            print("res shape",np.array(res).shape)
 
         self.X = window
         self.y = ind_action 
@@ -74,4 +86,4 @@ class Preprocess():
         return self.nb_sequences*len(self.actions)
 
     def get_data_length(self):
-        return len(remove_face(np.load(os.path.join(self.DATA_PATH, self.actions[0], str(0), "{}.npy".format(0)), allow_pickle=True)))
+        return len(remove_points(np.load(os.path.join(self.DATA_PATH, self.actions[0], str(0), "{}.npy".format(0)), allow_pickle=True)))
