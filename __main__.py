@@ -37,7 +37,7 @@ def launch_LSTM(output_size, train):
     test_preprocess = Preprocess(actions, DATA_PATH_TEST, nb_sequences_test, sequence_length, False)
 
     input_size = train_preprocess.get_data_length()
-    #print("input size",input_size)
+    print("input size",input_size)
 
     train_loader = DataLoader(train_preprocess, batch_size=batch_size, shuffle=True, num_workers=NUM_WORKERS,
                               pin_memory=True)
