@@ -3,8 +3,6 @@ import cv2
 import numpy as np
 import os
 
-from slr_project_mirror.test import launch_test, prob_viz
-
 
 FACE_LINKS = [
     # Lips.
@@ -122,7 +120,7 @@ DATA_PATH = os.path.join('MP_Data/Train')
 class Tuto:
     """ Use Body parametters to draw the body on a provided image """
 
-    def __init__(self,actions,action,RESOLUTION_X,RESOLUTION_Y):
+    def __init__(self,actions, RESOLUTION_X,RESOLUTION_Y):
 
         self.body_junctions = BODY_LINKS
         self.hand_junctions = HAND_LINKS
@@ -135,7 +133,6 @@ class Tuto:
         self.show_wrist = True
 
         self.actions = actions
-        self.action = action
 
         self.RESOLUTION_X = RESOLUTION_X
         self.RESOLUTION_Y = RESOLUTION_Y
@@ -206,7 +203,7 @@ class Tuto:
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
         return output_frame
 
-    def launch_tuto(self):
+    def launch_tuto(self, action):
         # Actions that we try to detect
         sequence_length = 30
         #label_map = {label: num for num, label in enumerate(self.actions)}
@@ -219,7 +216,7 @@ class Tuto:
         sequence = 1
         window = []
         for frame_num in range(sequence_length):
-            res = np.load(os.path.join(DATA_PATH, self.action, str(
+            res = np.load(os.path.join(DATA_PATH, action, str(
                 sequence), "{}.npy".format(frame_num)))
             # window.extend(res)
             window.append(res)
@@ -227,8 +224,6 @@ class Tuto:
             # datas.append(sequences)
         # Conversion des données en coordonnees
         data = {}
-        #idxAction = np.where(self.actions == self.action)[0][0]
-        #print(idxAction)
         sequence = sequences[0]
             
         for frame in sequence:
@@ -243,16 +238,14 @@ class Tuto:
                                     for i, _ in enumerate(frame[33*4+468*3: 33*4+468*3+21*3]) if i % 3 == 0]
             right_hands_landmarks = [[int(frame[33*4+468*3+21*3+i]*self.RESOLUTION_X), int(
                 frame[33*4+468*3+21*3+i+1]*self.RESOLUTION_Y)] for i, _ in enumerate(frame[33*4+468*3+21*3:]) if i % 3 == 0]
-
-            body = Tuto(self.actions,self.action,self.RESOLUTION_X,self.RESOLUTION_Y)
-
+            
             image = np.zeros((self.RESOLUTION_Y, self.RESOLUTION_X, 3), dtype=np.uint8)
-            image = self.display_action(self.action, image)
+            image = self.display_action(action, image)
             data["body"] = pose_landmarks
             data["left_hand"] = left_hands_landmarks
             data["right_hand"] = right_hands_landmarks
             data["face"] = face_landmarks
-            image = body.draw(image, data)
+            image = self.draw(image, data)
             # print(image.shape)
             cv2.imshow("My window", image)
             key = cv2.waitKey(66) #millisecondes entre chaque frame

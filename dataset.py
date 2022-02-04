@@ -2,21 +2,13 @@ import cv2
 import os
 import mediapipe as mp
 import numpy as np
-from slr_project_mirror.test import mediapipe_detection, draw_styled_landmarks, IntelVideoReader
+from slr_project_mirror.display import mediapipe_detection, draw_styled_landmarks, extract_keypoints
+from slr_project_mirror.video import IntelVideoReader
 
-mp_holistic = mp.solutions.holistic  # Holistic model
+
 
 # dans la création du dataset, je garde les points du visage au cas où
-def extract_keypoints(results):
-    pose = np.array([[res.x, res.y, res.z, res.visibility] for res in results.pose_landmarks.landmark]).flatten(
-    ) if results.pose_landmarks else np.zeros(33*4)
-    face = np.array([[res.x, res.y, res.z] for res in results.face_landmarks.landmark]).flatten(
-    ) if results.face_landmarks else np.zeros(468*3)
-    lh = np.array([[res.x, res.y, res.z] for res in results.left_hand_landmarks.landmark]).flatten(
-    ) if results.left_hand_landmarks else np.zeros(21*3)
-    rh = np.array([[res.x, res.y, res.z] for res in results.right_hand_landmarks.landmark]).flatten(
-    ) if results.right_hand_landmarks else np.zeros(21*3)
-    return np.concatenate([pose, face, lh, rh])
+
 
 class CustomImageDataset():
     # class CustomImageDataset(Dataset):
@@ -57,6 +49,7 @@ class CustomImageDataset():
                     pass
         
         # Set mediapipe model
+        mp_holistic = mp.solutions.holistic  # Holistic model
         with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
 
             # Loop through actionsToAdd

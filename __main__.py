@@ -6,16 +6,18 @@ import time
 import mediapipe as mp
 import torch
 
-
+from slr_project_mirror.video import IntelVideoReader
 from slr_project_mirror.dataset import CustomImageDataset
 from slr_project_mirror.LSTM import myLSTM
 from slr_project_mirror.preprocess import Preprocess
-from slr_project_mirror.test import launch_test, IntelVideoReader
+from slr_project_mirror.test_onnx import TestOnnx
+from slr_project_mirror.test import Test
 from slr_project_mirror.tuto import Tuto
 # Gives easier dataset managment by creating mini batches etc.
 from torch.utils.data import DataLoader
 from torch import nn  # All neural network modules
 from torch import optim  # For optimizers like SGD, Adam, etc.
+from tqdm import tqdm  # For nice progress bar!
 
 
 def launch_LSTM(output_size, train):
@@ -37,7 +39,6 @@ def launch_LSTM(output_size, train):
     test_preprocess = Preprocess(actions, DATA_PATH_TEST, nb_sequences_test, sequence_length, False)
 
     input_size = train_preprocess.get_data_length()
-    print("input size",input_size)
 
     train_loader = DataLoader(train_preprocess, batch_size=batch_size, shuffle=True, num_workers=NUM_WORKERS,
                               pin_memory=True)
@@ -55,9 +56,10 @@ def launch_LSTM(output_size, train):
         model = train_launch(model, learning_rate, DECAY,
                              num_epochs, train_loader, test_loader, valid_loader)
     else:
-        try:
+        try:            
+            model.load_state_dict(torch.load("./models/actionNN.pth"))
             print("Found valid model")
-            model.load_state_dict(torch.load("actionNN.pth"))
+            
         except:
             print("Not found")
             model = train_launch(model, learning_rate, DECAY,
@@ -65,6 +67,43 @@ def launch_LSTM(output_size, train):
 
     return model  # ,logits
 
+def train_loop(train_loader, model, criterion, optimizer):
+        with tqdm(train_loader, desc="Train") as pbar:
+            total_loss = 0.0
+            model = model.train()
+            # for data, targets in enumerate(tqdm(train_loader)):
+            for frame, targets in pbar:
+                frame, targets = frame.cuda(), targets.cuda()
+                #frame, targets = frame.cuda().float(), targets.cuda().float()
+                optimizer.zero_grad()
+                # Get to correct shape
+                scores = model(frame)
+                # print(targets.shape)
+                # print(scores.shape)
+                loss = criterion(scores, targets)
+                # backward
+                loss.backward()
+                # gradient descent or adam step
+                optimizer.step()
+                total_loss += loss.item() / len(train_loader)
+                pbar.set_postfix(loss=total_loss)
+    # Check accuracy on training & test to see how good our model
+
+def test_loop(loader, model, criterion):
+    num_correct = 0
+    num_samples = 0
+    model.eval()
+    with torch.no_grad():
+        for x, y in loader:
+            x = x.to(device = 'cuda' if torch.cuda.is_available() else 'cpu')
+            y = y.to(device = 'cuda' if torch.cuda.is_available() else 'cpu')
+            # x = x.reshape(x.shape[0], -1)
+            scores = model(x)
+            _, predictions = scores.max(1)
+            num_correct += (predictions == y).sum()
+            num_samples += predictions.size(0)
+    model.train()
+    return torch.div(num_correct, num_samples, rounding_mode='trunc')
 
 def train_launch(model, learning_rate, DECAY, num_epochs, train_loader, test_loader, valid_loader):
     # Loss and optimizer
@@ -75,20 +114,20 @@ def train_launch(model, learning_rate, DECAY, num_epochs, train_loader, test_loa
 
     for epoch in range(num_epochs):
         print(f"Epoch {epoch+1}\n-------------------------------")
-        model.train_loop(train_loader, model, criterion, optimizer)
+        train_loop(train_loader, model, criterion, optimizer)
 
         print(
-            f"Accuracy on training set: {model.test_loop(train_loader, model, criterion)*100:.2f}")
+            f"Accuracy on training set: {test_loop(train_loader, model, criterion)*100:.2f}")
         print(
-            f"Accuracy on test set: {model.test_loop(test_loader, model, criterion)*100:.2f}")
+            f"Accuracy on test set: {test_loop(test_loader, model, criterion)*100:.2f}")
     print("Done!")
 
     print(
-            f"Accuracy on valid set: {model.test_loop(valid_loader, model, criterion)*100:.2f}")
+            f"Accuracy on valid set: {test_loop(valid_loader, model, criterion)*100:.2f}")
    
         
     # model = models.vgg16(pretrained=True).cuda()
-    torch.save(model.state_dict(), 'actionNN.pth')
+    torch.save(model.state_dict(), './models/actionNN.pth')
     return model
 
 
@@ -111,6 +150,8 @@ sequence_length = 30
 make_train =  False
 make_dataset = False
 make_data_augmentation = True
+use_pth = False
+use_onnx = True
 #=================================================================================================================
 
 if(make_dataset): make_train = True
@@ -118,20 +159,29 @@ if(make_dataset): make_train = True
 actionsToAdd = []  #
 
 # Actions that we try to detect
+#actions = np.array(["nothing","empty", "hello", "thanks", "iloveyou"])
 actions = np.array(["nothing","empty", "hello", "thanks", "iloveyou","what's up", "hey","my", "name","nice","to meet you"])
 #, "nothing" 'hello', 'thanks', 'iloveyou', "what's up", "hey", "my", "name", "nice","to meet you"
 
 # instances de preprocess
 # on crée des instances de preprocess en leur donnant le chemin d'accès ainsi que le nombre de séquences dans chaque dossier
 # en fonction de si leur type de preprocess est train, valid, test.
-#
+
 if (make_dataset): CustomImageDataset(actionsToAdd, nb_sequences, sequence_length, DATA_PATH_TRAIN, DATA_PATH_VALID, DATA_PATH_TEST, RESOLUTION_X, RESOLUTION_Y).__getitem__()
 
 # Appel du modele
-model = launch_LSTM(len(actions),make_train)
+
 cap = IntelVideoReader()
+#myTestOnnx = TestOnnx()
+model = launch_LSTM(len(actions), make_train)
+if(use_pth): myTest = Test(model)
+if(use_onnx): myTest = TestOnnx()
+myTuto = Tuto(actions, RESOLUTION_X, RESOLUTION_Y)
+
+
 for action in actions:
     if (action != "nothing" and action != "empty"):
-        Tuto(actions, action, RESOLUTION_X, RESOLUTION_Y).launch_tuto()
-        launch_test(actions, model, action,cap, RESOLUTION_X, RESOLUTION_Y)
-        
+        # myTuto.launch_tuto(action)
+        #myTestOnnx.launch_test_onnx(actions, action, cap, RESOLUTION_X, RESOLUTION_Y)
+        myTest.launch_test(actions, action, cap, RESOLUTION_X, RESOLUTION_Y)
+        #launch_test(actions, model, action,cap, RESOLUTION_X, RESOLUTION_Y)
