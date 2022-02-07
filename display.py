@@ -6,7 +6,6 @@ import mediapipe as mp
 def extract_keypoints_no_face(results):
     pose = np.array([[res.x, res.y] for res in results.pose_landmarks.landmark]).flatten(
     ) if results.pose_landmarks else np.zeros(33*2)
-    #print("Length pose :",pose.shape)
     # face = np.array([[res.x, res.y, res.z] for res in results.face_landmarks.landmark]).flatten(
     # ) if results.face_landmarks else np.zeros(468*3)
     lh = np.array([[res.x, res.y] for res in results.left_hand_landmarks.landmark]).flatten(
@@ -14,8 +13,6 @@ def extract_keypoints_no_face(results):
     #print("Length lh :",lh.shape)
     rh = np.array([[res.x, res.y] for res in results.right_hand_landmarks.landmark]).flatten(
     ) if results.right_hand_landmarks else np.zeros(21*2)
-    #print("Length rh :",rh.shape)
-    #print("Total length :", np.concatenate([pose, lh, rh]).shape)
     return np.concatenate([pose, lh, rh])
 
 def extract_keypoints(results):
@@ -68,14 +65,14 @@ def mediapipe_detection(image, model):
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)  # COLOR COVERSION RGB 2 BGR
     return image, results
 
-def prob_viz(res, actions, input_frame, colors, action):
+def prob_viz(sign, probability, actions, input_frame, colors, action):
+    
     output_frame = input_frame.copy()
     indCol = 0
-    prob = res[np.argmax(res)]
     cv2.rectangle(output_frame, (0, 60),
-                    (int(prob*100), 90),
+                    (int(probability*len(sign)*1.5), 90),
                     colors[indCol], -1)
-    cv2.putText(output_frame, actions[np.argmax(res)], (0, 85),
+    cv2.putText(output_frame, sign, (0, 85),
                     cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
     cv2.rectangle(output_frame, (0, 560),
                     (100, 590),

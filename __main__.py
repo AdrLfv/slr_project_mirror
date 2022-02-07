@@ -1,10 +1,13 @@
 #!pip install opencv-python mediapipe
 
 import numpy as np
+import onnx
 import os
 import time
 import mediapipe as mp
+import onnxruntime as ort
 import torch
+
 
 from slr_project_mirror.video import IntelVideoReader
 from slr_project_mirror.dataset import CustomImageDataset
@@ -20,7 +23,7 @@ from torch import optim  # For optimizers like SGD, Adam, etc.
 from tqdm import tqdm  # For nice progress bar!
 
 
-def launch_LSTM(output_size, train):
+def launch_LSTM(output_size, train, weights_type):
     # Set device cuda for GPU if it's available otherwise run on the CPU
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # Hyperparameters of our neural network which depends on the dataset, and
@@ -56,9 +59,16 @@ def launch_LSTM(output_size, train):
         model = train_launch(model, learning_rate, DECAY,
                              num_epochs, train_loader, test_loader, valid_loader)
     else:
-        try:            
-            model.load_state_dict(torch.load("./models/actionNN.pth"))
-            print("Found valid model")
+        try:
+            if(weights_type == "onnx"):    
+                
+                model = ort.InferenceSession("./models/slr_11.onnx", providers=['TensorrtExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider'])
+
+                print("Found valid onnx model")
+            else:
+
+                model.load_state_dict(torch.load("../models/actionNN.pth"))
+                print("Found valid pth model")
             
         except:
             print("Not found")
@@ -150,8 +160,7 @@ sequence_length = 30
 make_train =  False
 make_dataset = False
 make_data_augmentation = True
-use_pth = False
-use_onnx = True
+weights_type = "onnx" #"pth"
 #=================================================================================================================
 
 if(make_dataset): make_train = True
@@ -173,9 +182,13 @@ if (make_dataset): CustomImageDataset(actionsToAdd, nb_sequences, sequence_lengt
 
 cap = IntelVideoReader()
 #myTestOnnx = TestOnnx()
-model = launch_LSTM(len(actions), make_train)
-if(use_pth): myTest = Test(model)
-if(use_onnx): myTest = TestOnnx()
+model = launch_LSTM(len(actions), make_train, weights_type)
+
+
+if(weights_type=="pth"): myTest = Test(model)
+if(weights_type=="onnx"): myTest = TestOnnx(model)
+
+
 myTuto = Tuto(actions, RESOLUTION_X, RESOLUTION_Y)
 
 
