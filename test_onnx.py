@@ -8,13 +8,14 @@ import os
 class TestOnnx():
     def __init__(self):
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        model_path = os.path.join(dir_path, "../models/slr.onnx")
+        model_path = os.path.join(dir_path, "../models/slr_5.onnx")
         
         self.model = onnxruntime.InferenceSession(model_path, providers=['TensorrtExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider'])
         self.mp_holistic = mp.solutions.holistic
         self.colors = [(245, 117, 16), (117, 245, 16), (16, 117, 245)]
+        
         self.mp_drawing = mp.solutions.drawing_utils  # Drawing utilities
-
+        
     def extract_keypoints_no_face(self, results):
         pose = np.array([[res.x, res.y] for res in results.pose_landmarks.landmark]).flatten(
         ) if results.pose_landmarks else np.zeros(33*2)
@@ -100,9 +101,7 @@ class TestOnnx():
         # sprint(out.shape)
         # print(np.shape(out))
         out = np.exp(out) / np.sum(np.exp(out))
-        print(np.argmax(out))
-        print(actions[np.argmax(out)])
-        print(float(np.max(out)))
+        
         return (actions[np.argmax(out)], float(np.max(out))) 
         # return le sign et la probability
 
@@ -148,6 +147,7 @@ class TestOnnx():
                 sequence = sequence[-30:]
                 if len(sequence) == 30:
                     sign, probability = self.get_sign(self.model, sequence, actions)
+                    
                     # 3. Viz logic
                     if probability > threshold:
                         if len(sentence) > 0:

@@ -5,7 +5,6 @@ import os
 import time
 import mediapipe as mp
 import torch
-
 from slr_project_mirror.video import IntelVideoReader
 from slr_project_mirror.dataset import CustomImageDataset
 from slr_project_mirror.LSTM import myLSTM
@@ -39,7 +38,7 @@ def launch_LSTM(output_size, train):
     test_preprocess = Preprocess(actions, DATA_PATH_TEST, nb_sequences_test, sequence_length, False)
 
     input_size = train_preprocess.get_data_length()
-
+    
     train_loader = DataLoader(train_preprocess, batch_size=batch_size, shuffle=True, num_workers=NUM_WORKERS,
                               pin_memory=True)
 
@@ -57,7 +56,7 @@ def launch_LSTM(output_size, train):
                              num_epochs, train_loader, test_loader, valid_loader)
     else:
         try:            
-            model.load_state_dict(torch.load("./models/actionNN.pth"))
+            model.load_state_dict(torch.load("./models/slr_5.pth"))
             print("Found valid model")
             
         except:
@@ -150,17 +149,16 @@ sequence_length = 30
 make_train =  False
 make_dataset = False
 make_data_augmentation = True
-use_pth = False
-use_onnx = True
+use_pth =True
+use_onnx = False
 #=================================================================================================================
 
 if(make_dataset): make_train = True
 # dataset making : (ajouter des actions dans le actionsToAdd pour créer leur dataset)
-actionsToAdd = []  #
+actionsToAdd = np.array([])  #
 
 # Actions that we try to detect
-#actions = np.array(["nothing","empty", "hello", "thanks", "iloveyou"])
-actions = np.array(["nothing","empty", "hello", "thanks", "iloveyou","what's up", "hey","my", "name","nice","to meet you"])
+actions = np.array(["nothing","empty", "hello", "thanks", "iloveyou"])
 #, "nothing" 'hello', 'thanks', 'iloveyou', "what's up", "hey", "my", "name", "nice","to meet you"
 
 # instances de preprocess
@@ -173,6 +171,7 @@ if (make_dataset): CustomImageDataset(actionsToAdd, nb_sequences, sequence_lengt
 
 cap = IntelVideoReader()
 #myTestOnnx = TestOnnx()
+
 model = launch_LSTM(len(actions), make_train)
 if(use_pth): myTest = Test(model)
 if(use_onnx): myTest = TestOnnx()
