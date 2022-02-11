@@ -7,8 +7,6 @@ import time
 import mediapipe as mp
 import onnxruntime as ort
 import torch
-
-
 from slr_project_mirror.video import IntelVideoReader
 from slr_project_mirror.dataset import CustomImageDataset
 from slr_project_mirror.LSTM import myLSTM
@@ -42,7 +40,7 @@ def launch_LSTM(output_size, train, weights_type):
     test_preprocess = Preprocess(actions, DATA_PATH_TEST, nb_sequences_test, sequence_length, False)
 
     input_size = train_preprocess.get_data_length()
-
+    
     train_loader = DataLoader(train_preprocess, batch_size=batch_size, shuffle=True, num_workers=NUM_WORKERS,
                               pin_memory=True)
 
@@ -59,16 +57,9 @@ def launch_LSTM(output_size, train, weights_type):
         model = train_launch(model, learning_rate, DECAY,
                              num_epochs, train_loader, test_loader, valid_loader)
     else:
-        try:
-            if(weights_type == "onnx"):    
-                
-                model = ort.InferenceSession("./models/slr_11.onnx", providers=['TensorrtExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider'])
-
-                print("Found valid onnx model")
-            else:
-
-                model.load_state_dict(torch.load("../models/actionNN.pth"))
-                print("Found valid pth model")
+        try:            
+            model.load_state_dict(torch.load("./models/slr_5.pth"))
+            print("Found valid model")
             
         except:
             print("Not found")
@@ -160,16 +151,16 @@ sequence_length = 30
 make_train =  False
 make_dataset = False
 make_data_augmentation = True
-weights_type = "onnx" #"pth"
+use_pth =True
+use_onnx = False
 #=================================================================================================================
 
 if(make_dataset): make_train = True
 # dataset making : (ajouter des actions dans le actionsToAdd pour créer leur dataset)
-actionsToAdd = []  #
+actionsToAdd = np.array([])  #
 
 # Actions that we try to detect
-#actions = np.array(["nothing","empty", "hello", "thanks", "iloveyou"])
-actions = np.array(["nothing","empty", "hello", "thanks", "iloveyou","what's up", "hey","my", "name","nice","to meet you"])
+actions = np.array(["nothing","empty", "hello", "thanks", "iloveyou"])
 #, "nothing" 'hello', 'thanks', 'iloveyou', "what's up", "hey", "my", "name", "nice","to meet you"
 
 # instances de preprocess
@@ -182,13 +173,10 @@ if (make_dataset): CustomImageDataset(actionsToAdd, nb_sequences, sequence_lengt
 
 cap = IntelVideoReader()
 #myTestOnnx = TestOnnx()
-model = launch_LSTM(len(actions), make_train, weights_type)
 
-
-if(weights_type=="pth"): myTest = Test(model)
-if(weights_type=="onnx"): myTest = TestOnnx(model)
-
-
+model = launch_LSTM(len(actions), make_train)
+if(use_pth): myTest = Test(model)
+if(use_onnx): myTest = TestOnnx()
 myTuto = Tuto(actions, RESOLUTION_X, RESOLUTION_Y)
 
 

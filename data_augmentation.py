@@ -20,19 +20,10 @@ class Data_augmentation():
         # lorsque l'on passe à la séquence suivante on change les paramètres de modification
         self.data_frame = []
         #print("data frame : ", np.array(data_frame).shape)
-        for ind, _ in enumerate(data_frame[0:33*4]):
-            if (ind % 4 == 0):
+        for ind, _ in enumerate(data_frame[0:]):
+            if (ind % 2 == 0):
                 self.data_frame.append(data_frame[ind] * scale + x_shift)
                 self.data_frame.append(data_frame[ind+1] * scale + y_shift)
-                self.data_frame.append(data_frame[ind+2] * scale)
-                self.data_frame.append(data_frame[ind+3])
-
-        for ind, _ in enumerate(data_frame[33*4:]):
-            if (ind % 3 == 0):
-                self.data_frame.append(data_frame[33*4+ind] * scale + x_shift)
-                self.data_frame.append(
-                    data_frame[33*4+ind+1] * scale + y_shift)
-                self.data_frame.append(data_frame[33*4+ind+2] * scale)
 
         self.data_frame = self.data_frame
         #print("self.data_frame : ", np.array(self.data_frame).shape)

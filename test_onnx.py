@@ -6,7 +6,46 @@ import os
 from slr_project_mirror.display import draw_styled_landmarks, mediapipe_detection, extract_keypoints_no_face, prob_viz
 # pip install onnx
 
+<<<<<<< HEAD
 from onnx_tf.backend import prepare
+=======
+class TestOnnx():
+    def __init__(self):
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        model_path = os.path.join(dir_path, "../models/slr_5.onnx")
+        
+        self.model = onnxruntime.InferenceSession(model_path, providers=['TensorrtExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider'])
+        self.mp_holistic = mp.solutions.holistic
+        self.colors = [(245, 117, 16), (117, 245, 16), (16, 117, 245)]
+        
+        self.mp_drawing = mp.solutions.drawing_utils  # Drawing utilities
+        
+    def extract_keypoints_no_face(self, results):
+        pose = np.array([[res.x, res.y] for res in results.pose_landmarks.landmark]).flatten(
+        ) if results.pose_landmarks else np.zeros(33*2)
+        #print("Length pose :",pose.shape)
+        # face = np.array([[res.x, res.y, res.z] for res in results.face_landmarks.landmark]).flatten(
+        # ) if results.face_landmarks else np.zeros(468*3)
+        lh = np.array([[res.x, res.y] for res in results.left_hand_landmarks.landmark]).flatten(
+        ) if results.left_hand_landmarks else np.zeros(21*2)
+        #print("Length lh :",lh.shape)
+        rh = np.array([[res.x, res.y] for res in results.right_hand_landmarks.landmark]).flatten(
+        ) if results.right_hand_landmarks else np.zeros(21*2)
+        #print("Length rh :",rh.shape)
+        #print("Total length :", np.concatenate([pose, lh, rh]).shape)
+        return np.concatenate([pose, lh, rh])
+
+
+    def mediapipe_detection(self, image, model):
+        # COLOR CONVERSION BGR 2 RGB
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image.flags.writeable = False                  # Image is no longer writeable
+        results = model.process(image)                 # Make prediction
+        image.flags.writeable = True                   # Image is now writeable
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)  # COLOR COVERSION RGB 2 BGR
+        return image, results
+
+>>>>>>> main
 
 class TestOnnx():
     def __init__(self, model):
@@ -22,6 +61,7 @@ class TestOnnx():
         """
         Get sign from frames
         """
+<<<<<<< HEAD
         ort_session = self.model
         out = ort_session.run(
             None,
@@ -29,6 +69,17 @@ class TestOnnx():
         )
         #out = np.exp(out) / np.sum(np.exp(out))
         return (actions[np.argmax(out)], float(np.max(out)))
+=======
+        #data = self.extract_keypoints_no_face(results)
+        ort_inputs = {model.get_inputs()[0].name: np.array([sequence], dtype=np.float32)}
+        out = model.run(None, ort_inputs)[-1]
+        # sprint(out.shape)
+        # print(np.shape(out))
+        out = np.exp(out) / np.sum(np.exp(out))
+        
+        return (actions[np.argmax(out)], float(np.max(out))) 
+        # return le sign et la probability
+>>>>>>> main
 
     def launch_test(self, actions, targeted_action,cap, RESOLUTION_X, RESOLUTION_Y): 
 
@@ -71,7 +122,12 @@ class TestOnnx():
                 sequence.append(keypoints)
                 sequence = sequence[-30:]
                 if len(sequence) == 30:
+<<<<<<< HEAD
                     sign, probability = self.get_sign(sequence, actions)
+=======
+                    sign, probability = self.get_sign(self.model, sequence, actions)
+                    
+>>>>>>> main
                     # 3. Viz logic
                     if probability > threshold:
                         if len(sentence) > 0:
