@@ -10,29 +10,31 @@ import os
 
 from slr_project_mirror.tuto import DATA_PATH
 
+
 def remove_points(results):
     window = []
     frame = list(results)
-    #pose
+    # pose
     for i, _ in enumerate(frame[0:33*4]):
         if i % 4 == 0:
-            window.append(frame[i]) 
-            window.append(frame[i+1]) 
+            window.append(frame[i])
+            window.append(frame[i+1])
 
-    #left hand
+    # left hand
     for i, _ in enumerate(frame[33*4+468*3: 33*4+468*3+21*3]):
         if i % 3 == 0:
-            window.append(frame[33*4+468*3+i]) 
-            window.append(frame[33*4+468*3+i+1]) 
+            window.append(frame[33*4+468*3+i])
+            window.append(frame[33*4+468*3+i+1])
 
-    #right hand
+    # right hand
     for i, _ in enumerate(frame[33*4+468*3+21*3:]):
         if i % 3 == 0:
-            window.append(frame[33*4+468*3+21*3+i]) 
-            window.append(frame[33*4+468*3+21*3+i+1]) 
+            window.append(frame[33*4+468*3+21*3+i])
+            window.append(frame[33*4+468*3+21*3+i+1])
 
     #print("window shape",np.array(window).shape)
     return window
+
 
 class Preprocess():
     def __init__(self, actions, DATA_PATH: str, nb_sequences: int, sequence_length: int, data_augmentation: bool):
@@ -63,19 +65,20 @@ class Preprocess():
         for frame_num in range(self.sequence_length):
             res = np.load(os.path.join(self.DATA_PATH, self.actions[ind_action], str(
                 ind_seq), "{}.npy".format(frame_num)), allow_pickle=True)
-            
-            
+
             res = remove_points(res)
-            if (self.data_augmentation): res = Data_augmentation(res, x_shift, y_shift, scale).__getitem__()
+            if (self.data_augmentation):
+                res = Data_augmentation(
+                    res, x_shift, y_shift, scale).__getitem__()
             window.append(res)
-            
+
             # print("res shape",np.array(res).shape)
 
         self.X = window
-        self.y = ind_action 
-        
+        self.y = ind_action
+
         self.X = torch.tensor(self.X, dtype=torch.float)
-        
+
         self.y = torch.tensor(self.y, dtype=torch.long)
         data = self.X, self.y
         return data

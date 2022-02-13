@@ -65,7 +65,7 @@ def mediapipe_detection(image, model):
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)  # COLOR COVERSION RGB 2 BGR
     return image, results
 
-def prob_viz(sign, probability, actions, input_frame, colors, action):
+def prob_viz(sign, probability, input_frame, colors, action):
     
     output_frame = input_frame.copy()
     indCol = 0

@@ -71,8 +71,7 @@ class Test():
                         sentence = sentence[-5:]
 
                     # Viz probabilities
-                    image = prob_viz(sign, probability, actions,
-                                     image, self.colors, targeted_action)
+                    image = prob_viz(sign, probability, image, self.colors, targeted_action)
                     if(sign == targeted_action):
                         count_valid += 1
                     else:
